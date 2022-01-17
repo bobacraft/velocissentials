@@ -1,9 +1,9 @@
 package best.boba.velocissentials;
 
 import com.google.inject.Inject;
-import com.velocitypowered.api.event.EventManager;
+import com.velocitypowered.api.event.Subscribe;
+import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.plugin.Plugin;
-import com.velocitypowered.api.plugin.PluginManager;
 import com.velocitypowered.api.proxy.ProxyServer;
 import org.slf4j.Logger;
 
@@ -16,14 +16,23 @@ import org.slf4j.Logger;
 public class velocissentials {
     private final ProxyServer server;
     private final Logger logger;
+    private final Config config;
 
     @Inject
     public velocissentials(ProxyServer server, Logger logger) {
         this.server = server;
         this.logger = logger;
+        this.config = new Config(this.server, this.logger);
     }
 
     public void initalize() {
-        PluginManager pluginManager = server.getPluginManager();
+        new CommandFind(config).register();
+        new CommandPing(config).register();
+        new CommandSend(config).register();
+    }
+
+    @Subscribe
+    public void onProxyInitialize(ProxyInitializeEvent event) {
+        initalize();
     }
 }
