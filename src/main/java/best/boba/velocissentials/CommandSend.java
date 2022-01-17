@@ -34,11 +34,56 @@ public class CommandSend {
                 .requires(sender -> sender.hasPermission("velocissentials.send"))
                 .build();
 
+        LiteralCommandNode<CommandSource> serverNode = LiteralArgumentBuilder
+                .<CommandSource>literal("server")
+                .build();
+
+        LiteralCommandNode<CommandSource> playerNode = LiteralArgumentBuilder
+                .<CommandSource>literal("player")
+                .then(RequiredArgumentBuilder
+                        .<CommandSource, String>argument("player", StringArgumentType.string())
+                        .suggests(((context, builder) -> {
+                            this.config.server().getAllPlayers().forEach(p -> builder.suggest(p.getUsername()));
+                            return builder.buildFuture();
+                        }))
+                        .then(RequiredArgumentBuilder
+                                .<CommandSource, String>argument("to", StringArgumentType.string())
+                                .suggests(((context, builder) -> suggestAllServers(builder)))
+                                .executes(context -> {
+                                    CommandSource sender = context.getSource();
+                                    String playerName = context.getArgument("player", String.class);
+                                    Optional<Player> optionalPlayer = this.config.server().getPlayer(playerName);
+                                    if (optionalPlayer.isEmpty()) {
+                                        sender.sendMessage(Component.text(
+                                                "Player named " + playerName + " could not be found"
+                                        ).color(NamedTextColor.RED));
+                                        return 0;
+                                    }
+                                    Player player = optionalPlayer.get();
+
+                                    String serverName = context.getArgument("to", String.class);
+                                    Optional<RegisteredServer> optionalTargetServer = this.config.server().getServer(serverName);
+                                    if (optionalTargetServer.isEmpty()) {
+                                        sender.sendMessage(Component.text(
+                                                "Server named " + serverName + " could not be found"
+                                        ).color(NamedTextColor.RED));
+                                        return 0;
+                                    }
+
+                                    List<Player> playerList = new ArrayList<>();
+                                    playerList.add(player);
+                                    sendTo(sender, playerList, optionalTargetServer.get());
+                                    return 1;
+                                })
+                        )
+                )
+                .build();
+
         LiteralCommandNode<CommandSource> allCommand = LiteralArgumentBuilder
                 .<CommandSource>literal("all")
                 .then(RequiredArgumentBuilder
                         .<CommandSource, String>argument("to", StringArgumentType.string())
-                        .suggests(((context, builder) -> suggestAllServers(this.config.server(), builder)))
+                        .suggests(((context, builder) -> suggestAllServers(builder)))
                         .executes(context -> {
                             CommandSource sender = context.getSource();
                             String toString = context.getArgument("to", String.class);
@@ -59,12 +104,12 @@ public class CommandSend {
 
         ArgumentCommandNode<CommandSource, String> fromArg = RequiredArgumentBuilder
                 .<CommandSource, String>argument("from", StringArgumentType.string())
-                .suggests(((context, builder) -> suggestAllServers(this.config.server(), builder)))
+                .suggests(((context, builder) -> suggestAllServers(builder)))
                 .build();
 
         ArgumentCommandNode<CommandSource, String> toArg = RequiredArgumentBuilder
                 .<CommandSource, String>argument("to", StringArgumentType.string())
-                .suggests(((context, builder) -> suggestAllServers(this.config.server(), builder)))
+                .suggests(((context, builder) -> suggestAllServers(builder)))
                 .executes(context -> {
                     CommandSource sender = context.getSource();
                     String fromString = context.getArgument("from", String.class);
@@ -91,8 +136,10 @@ public class CommandSend {
                     return 1;
                 }).build();
 
-        rootNode.addChild(allCommand);
-        rootNode.addChild(fromArg);
+        rootNode.addChild(serverNode);
+        rootNode.addChild(playerNode);
+        serverNode.addChild(allCommand);
+        serverNode.addChild(fromArg);
         fromArg.addChild(toArg);
 
         BrigadierCommand brigadierCommand = new BrigadierCommand(rootNode);
@@ -141,8 +188,8 @@ public class CommandSend {
         sender.sendMessage(Component.text("  Internal server errors: " + internalErrors).color(NamedTextColor.DARK_RED));
     }
 
-    private static CompletableFuture<Suggestions> suggestAllServers(ProxyServer server, SuggestionsBuilder builder) {
-        for (RegisteredServer s : server.getAllServers()) {
+    private CompletableFuture<Suggestions> suggestAllServers(SuggestionsBuilder builder) {
+        for (RegisteredServer s : this.config.server().getAllServers()) {
             builder.suggest(s.getServerInfo().getName());
         }
         return builder.buildFuture();
