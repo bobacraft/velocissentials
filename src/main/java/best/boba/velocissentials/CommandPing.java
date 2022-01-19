@@ -42,12 +42,7 @@ public class CommandPing {
         ArgumentCommandNode<CommandSource, String> pingOther = RequiredArgumentBuilder
                 .<CommandSource, String>argument("player", StringArgumentType.string())
                 .requires(sender -> sender.hasPermission("velocissentials.ping.others"))
-                .suggests((context, builder) -> {
-                    for (Player player : this.config.server().getAllPlayers()) {
-                        builder.suggest(player.getUsername());
-                    }
-                    return builder.buildFuture();
-                })
+                .suggests(Utils.suggestOnlinePlayers(this.config.server()))
                 .executes(context -> {
                     CommandSource sender = context.getSource();
                     String username = context.getArgument("player", String.class);

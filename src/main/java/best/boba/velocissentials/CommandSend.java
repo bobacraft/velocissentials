@@ -12,7 +12,6 @@ import com.velocitypowered.api.command.CommandMeta;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.ConnectionRequestBuilder;
 import com.velocitypowered.api.proxy.Player;
-import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -42,10 +41,7 @@ public class CommandSend {
                 .<CommandSource>literal("player")
                 .then(RequiredArgumentBuilder
                         .<CommandSource, String>argument("player", StringArgumentType.string())
-                        .suggests(((context, builder) -> {
-                            this.config.server().getAllPlayers().forEach(p -> builder.suggest(p.getUsername()));
-                            return builder.buildFuture();
-                        }))
+                        .suggests(Utils.suggestOnlinePlayers(this.config.server()))
                         .then(RequiredArgumentBuilder
                                 .<CommandSource, String>argument("to", StringArgumentType.string())
                                 .suggests(((context, builder) -> suggestAllServers(builder)))

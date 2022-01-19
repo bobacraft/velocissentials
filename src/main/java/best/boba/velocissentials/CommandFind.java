@@ -26,10 +26,7 @@ public class CommandFind {
                 .<CommandSource>literal("find")
                 .then(RequiredArgumentBuilder
                         .<CommandSource, String>argument("player", StringArgumentType.string())
-                        .suggests(((context, builder) -> {
-                            this.config.server().getAllPlayers().forEach(p -> builder.suggest(p.getUsername()));
-                            return builder.buildFuture();
-                        }))
+                        .suggests(Utils.suggestOnlinePlayers(this.config.server()))
                         .executes(context -> {
                             CommandSource sender = context.getSource();
                             String username = context.getArgument("player", String.class);
