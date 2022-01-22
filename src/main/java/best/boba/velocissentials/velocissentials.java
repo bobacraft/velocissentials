@@ -9,7 +9,7 @@ import org.slf4j.Logger;
 
 @Plugin(id = "velocissentials",
         name = "velocissentials",
-        version = "1.0.1",
+        version = "1.1",
         url = "https://github.com/bobacraft/velocissentials",
         authors = {"bbaovanc"},
         description = "Some basic commands for the Velocity proxy")
