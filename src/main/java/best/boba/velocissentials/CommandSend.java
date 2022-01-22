@@ -134,7 +134,7 @@ public class CommandSend {
 
         rootNode.addChild(serverNode);
         rootNode.addChild(playerNode);
-        serverNode.addChild(allCommand);
+        rootNode.addChild(allCommand);
         serverNode.addChild(fromArg);
         fromArg.addChild(toArg);
 
